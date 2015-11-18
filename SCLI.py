@@ -10,7 +10,7 @@ class CMD(cmd.Cmd):
 	sessionList = {}
 
 	def __updatePrompt(self):
-		self.prompt = "SShells [%d] >> " % self.currentSessionId
+		self.prompt = "ssherpa [%d] >> " % self.currentSessionId
 
 	def __idInSesslist(self, id):
 		if id in self.sessionList:
@@ -24,15 +24,16 @@ class CMD(cmd.Cmd):
 	def do_create(self, line):
 		sessId = self.sessionCount + 1
 		argv = CommandLineToArgV(line)
-		if len(argv) < 2:
-			print "usage: create user ip password <extra args>"
-			return
-		s = Session(argv[0], argv[1])
-		self.sessionList[sessId] = s
-		self.sessionCount = sessId
+		try:
+			s = Session(argv)
+			self.sessionList[sessId] = s
+			self.sessionCount = sessId
+			print "[+] Added as session %d" % sessId
+		except:
+			pass
 
 	def do_sesslist(self, line):
-		print "%4s %20s %20s %5s %8s" % ("ID", "user@addr", "password", "port", "Active?")
+		print "%4s %20s %5s %8s" % ("ID", "user@addr", "port", "Active?")
 		for k in self.sessionList:
 			print "%4s %s" % (str(k), self.sessionList[k])
 
@@ -56,7 +57,7 @@ class CMD(cmd.Cmd):
 
 	def do_disconnect(self, line):
 		if self.__idInSesslist(self.currentSessionId):
-			self.sessionList[self.currentSessionId].connect()
+			self.sessionList[self.currentSessionId].disconnect()
 		else:
 			print "no session id %d in list" % self.currentSessionId
 
@@ -80,10 +81,18 @@ class CMD(cmd.Cmd):
 		else:
 			print "no session id %d in list" % self.currentSessionId
 
+	def do_exec(self, line):
+		args = CommandLineToArgV(line)
+		if self.__idInSesslist(self.currentSessionId):
+			self.sessionList[self.currentSessionId].sexec(args)
+		else:
+			print "no session id %d in list" % self.currentSessionId
+
 	def do_quit(self, line):
 		print "Closing existing connections"
 		for k in self.sessionList:
 			self.sessionList[k].disconnect()
 		print "Exiting"
 		return True
+
 
